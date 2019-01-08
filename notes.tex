@@ -41,4 +41,93 @@
       \item Transactions
     \end{itemize}
 
+  \section{Indexing}
+
+    \subsection{Files and Indices}
+      A record id (rid) is an identifier that can be used to physically locate a record in memory. A file stores
+      a series of records. Files can include indices, which are data structures that speed the retrieval of records
+      searched for by an index's search key fields. For example, if a file stores records of employees and one wants
+      to speed up searching by name, an index can be created with name as the search key. In this example, a name is
+      considered to be a data entry, while the employee is considered to be a data record. Indices can also be created
+      over multiple search keys (known as composite search keys). While indices can speed up reads, they tend to add
+      overhead to writes that slows them down.
+
+      As an alternative to indices, some non-indexed structures of files include:
+      \begin{itemize}
+        \item \textbf{Heap File:} These files store records in random order. They are good for write-heavy workloads,
+          but bad for reading due to their lack of indices.
+        \item \textbf{Sorted File:} Good for range-based and equality-based lookups of records, but updates are slower
+          than for heap files.
+      \end{itemize}
+
+    \subsection{Data Storage in Indices}
+      An index can facilitate retrieval of records by either:
+      \begin{enumerate}
+        \item Storing a data record next to the data entry. At most one index on a collection of data records can use
+          this technique, since otherwise records are duplicated. Also, large data records may result in fewer data entries
+          per page, which can result in more page fetches.
+        \item Storing the rid of where the data can be retrieved. This allows more data entries to fit on a page, since (possibly
+          large) data records are not stored next to the data entries. However, a separate page load is necessary to retrieve
+          a data record based on its rid.
+      \end{enumerate}
+
+    \subsection{Index Classification}
+      If a search key contains the primary key of a file, it is known as the primary index. Other indices are known as secondary
+      indices.
+
+      If the order of data records is the order of data entries of an index, the index is considered clustered. (e.g. see storage
+      example 1 in above section). Clustered indices can greatly speed retrieving records due to a decreased number of page loads.
+      To avoid duplication of records, at most one index in a file can be clustered. However, there can be multiple partially
+      clustered indices, which are indices in which the order of data records is roughly that of the data entries, which can provide
+      similar advantages to clustered indices. For example, if employee salary is a clustered index, employee rank may be partially
+      clustered, since rank is likely correlated to salary.
+
+    \subsection{Index Implementations}
+      Indices are most commonly implemented using hash tables or tree structures.
+
+      \subsubsection{Tree-Based Indices}
+        Tree-based indices are implemented using search trees. Since search trees are ordered, tree-based indices support both equality
+        and range searches.
+
+        The most widely used search-based indices are B+ trees. These are trees that store alphabetically ordered search keys in internal
+        nodes and data entries in leaf nodes. Internal nodes are typically sized so that each node is the same size as a page in memory,
+        limiting the number of page loads. The number of pointers to child nodes in an internal node is known as a B+ tree's fanout. A
+        large fanout decreases the tree's height.
+
+        Tree-based structures may need to adjust their index after every write. Thus, when many writes are done in sequence it can be
+        advantageous to simply sort the entries and then re-build the B+ tree's index after the writes are complete, decreasing the number
+        of page loads. Such techniques for inserting multiple records efficiently are known as bulk loading.
+
+      \subsubsection{Hash-Based Indices}
+        Hash-based indices implement search using a hash table with buckets containing data entries. Hash-based indices can support equality
+        searches, but since hash table are unordered, they do not speed up range searches.
+
+        Hash-based indices differ in their hashing schemes. Some common hashing schemes are:
+        \begin{itemize}
+          \item \textbf{Static Hashing} uses a fixed number of buckets, and entries point to a chain of data records. This chain can grow
+            long if there are many collisions.
+          \item \textbf{Extendible Hashing} is a form of dynamic hashing, which can dynamically grow and shrink the number of buckets to balance
+            memory usage with lowering the risk of collisions. The high-level idea is to split a bucket when it overflows, which may involve
+            doubling the keyspace, and to undo this operation if a bucket becomes empty.
+          \item \textbf{Linear Hashing} is another form of dynamic hashing. It avoids the ``directory-like'' structure of extendable hashing by
+            allowing the number of buckets to increase one at a time instead of growing by doubling the keyspace. It supports overflow entries,
+            but avoids long overflow chains by redistributing entries in a round-robin fashion when a new bucket is added.
+        \end{itemize}
+
+    \subsection{Cost Models}
+      When comparing index and file organization options, it can be helpful to model the cost of common operations (search (equality and range),
+      insert, update, delete) using the following parameters:
+      \begin{itemize}
+        \item $B$ - number of pages with data
+        \item $R$ - number of data records per page
+        \item $D$ - average time to read or write page
+      \end{itemize}
+
+      Index and file organization options should be considered with the database's type of workload in mind.
+
+    \subsection{Index-Only Plans}
+      Some queries can be answered without actually retrieving any data records. For example, if a query is simply counting the number of employees
+      with a certain name, then it is sufficient to count the number of data entries in an index using employee name as the search key; no data records
+      need to be accessed, making this an index-only plan.
+
 \end{document}
