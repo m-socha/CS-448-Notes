@@ -123,7 +123,8 @@
         \item $D$ - average time to read or write page
       \end{itemize}
 
-      Index and file organization options should be considered with the database's type of workload in mind.
+      Index and file organization options should be considered with the database's type of workload and data in mind (i.e. workload profiling and
+      data profiling).
 
     \subsection{Index-Only Plans}
       Some queries can be answered without actually retrieving any data records. For example, if a query is simply counting the number of employees
