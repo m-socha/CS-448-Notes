@@ -167,4 +167,31 @@
       with a certain name, then it is sufficient to count the number of data entries in an index using employee name as the search key; no data records
       need to be accessed, making this an index-only plan.
 
+  \section{External Sorting}
+
+    \subsection{Motivation}
+      Sorting is a very common problem in computer science. Sample sorting applications in databases include returning sorted data, sorting intermediary
+      results to speed up some other operation such as removing duplicates, and bulk loading B+ trees.
+
+      Sorting in databases often deals with very large amounts of data that cannot all fit into RAM. This introduces the need for external sorting algorithms.
+
+    \subsection{External Merge Sort}
+      Consider a case where $N$ pages of data need to be sorted using $B$ pages of memory (known as buffer memory). The external merge sort algorithm is as
+      follows:
+
+      \begin{enumerate}
+        \item Sort the values within in each page in memory. This can be done using any sort algorithm. One variant is to use heapsort to read in $B$ blocks
+          right away to produce sorted runs with an average length of $2B$.
+        \item Repeatedly use $B$ buffer pages to run merge sort on the merged sublists. Each run produces $\frac{N}{B}$ sorted runs, and each sorted run grows
+          by $B$ pages between sorting rounds.
+      \end{enumerate}
+
+      The total number of sorting rounds (also known as passes) is around $1 + \log_{B-1}((\frac{N}{B}))$. The number of read/write page operations in each
+      pass is $2N$ (i.e. one for loading page into buffer memory, one for writing sorted buffer back to persistent memory).
+
+    \subsection{Using B+ Trees}
+      Consider a case where a relation to be sorted has a B+ tree index over the sort columns. If the index is clustered, then using the index can be very
+      effective, since the records can be retrieved in order page-by-page. If the index is unclustered, the order of page loading will be seemingly random
+      and result in heavy page thrashing.
+
 \end{document}
