@@ -197,6 +197,39 @@
 
   \section{Evaluation of Relational Operations}
 
+    \subsection{Selections}
+      Selections involve selecting a subset of tuples from a relation based on some condition. Two high-level approaches to selections with multiple conjunct
+      terms are:
+
+      \begin{enumerate}
+        \item Find the most selective access path (i.e. the one with the fewest returned tuples), then the most selective access path for the remaining
+          tuples, and so forth.
+        \item Retrieve the rids for each conjunct term in a condition separately, find the intersection between these rids, and then retrieve the corresponding
+          records.
+      \end{enumerate}
+
+      The simplest physical implementation of a selection is to perform a linear scan over a relation and return those tuples that pass a condition. Indices can
+      be used to speed up selections. Note that unclustered indices can be made to imitate clustered indices by sorting their rids before retrieving records, though
+      this can greatly slow down the speed of retrieving the first few records.
+
+    \subsection{Projections}
+      Projections remove duplicate rows and unwanted columns from a relation. Removing unwanted columns is quite simple. Removing duplicates can be done by:
+
+      \begin{enumerate}
+        \item Sorting, which could be done by modifying the external merge sort algorithm to eliminate duplicates when merging. This implementation has the
+          additional potential benefit that the results are sorted.
+        \item Hashing, which is done by using a hash function $h$ to partition a result set into subsets small enough to fit in memory. The duplicates can then
+          be removed from each subset.
+      \end{enumerate}
+
+    \subsection{Set Operations}
+      Intersection and cross products are a special case of joins, which are covered below. The union and difference set operations can be implemented similarly
+      to projections.
+
+    \subsection{Aggregate Operations}
+      Aggregate operations (e.g. AVG, MIN, MAX) without grouping typically require scanning an entire relation. If grouped, then a sorting or hashing approach
+      similar to that of the projection operation can be applied so that tuples grouped in the operation can be loaded into memory together.
+
     \subsection{Joins}
       Joining data across tables is a common and potentially very expensive database operation. Various join algorithms are available and their performance
       can vary greatly depending on the joined data, the available indices, and the join conditions.
