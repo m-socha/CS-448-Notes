@@ -1,6 +1,7 @@
 \documentclass[12pt,titlepage]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage{parskip}
+\usepackage{amsmath}
 
 \let\stdsection\section
 \renewcommand\section{\clearpage\stdsection}
@@ -193,5 +194,51 @@
       Consider a case where a relation to be sorted has a B+ tree index over the sort columns. If the index is clustered, then using the index can be very
       effective, since the records can be retrieved in order page-by-page. If the index is unclustered, the order of page loading will be seemingly random
       and result in heavy page thrashing.
+
+  \section{Evaluation of Relational Operations}
+
+    \subsection{Joins}
+      Joining data across tables is a common and potentially very expensive database operation. Various join algorithms are available and their performance
+      can vary greatly depending on the joined data, the available indices, and the join conditions.
+
+      The below examples consist of joining tables $R$ and $S$ over some condition. For cost analysis, $M$ is the number of pages in $R$, $N$ is the number
+      of pages in $N$, and $p_R$ is the number of tuples per page in $R$.
+
+      \subsubsection{Simple Nested Loop Join}
+        The simple nested loop join tables $R$ and $S$ is as follows:
+        \begin{enumerate}
+          \item Loop through each tuple $r$ in $R$.
+          \item For each $r$, loop through each tuple $s$ in $S$.
+          \item If the join condition evaluates to true for $r, s$, then we add $(r, s)$ to the output.
+        \end{enumerate}
+
+        $R$ is considered to the be outer relation, and $S$ is considered to be the inner relation. When done naively by just looping through one record at a
+        time, the number of IO operations is around $M + p_R M N$. The $p_R$ term can be removed by finding matches between $R$ and $S$ one page at a time
+        rather than one record at a time, making the number of IO operations $M + M N$. This variant is known as page-oriented or block nested loop join.
+
+      \subsubsection{Index Nested Loop Join}
+        Index nested loop joins differ from simple nested loop joins in that they can use an index of the inner relation. The number of IO operations is
+        $M + (M p_R) \text{ cost of findings matching tuples in } S$.
+
+      \subsection{Sort Merge Join}
+        Sort merge join involves sorting $R$ and $S$ on the join column. $R$ and $S$ are then scanned sequentially to look for matches. The cost of sorting
+        $R$ is $M \log{M}$ and the cost of sorting $S$ is $N \log{N}$. The cost of scanning after sorting is usually around $M + N$, though could be as high
+        as $M N$.
+
+        Sort merge join can be altered so that the joining occurs during the merging portion of external merge join.
+
+      \subsubsection{Hash Join}
+        In a hash join, a hash function $h$ is used to partition relations $R$ and $S$. These partitions should be small enough to fit in main memory, and they
+        are then loaded in pairs, after which matches are found between them. To further speed lookup, a hash table can be built for each partition of $R$,
+        though this requires a bit more memory.
+
+        Hash join has a cost of $2(M + N)$ during the partitioning phase, and $M + N$ during the matching phase. This is similar to the cost of sort merge join.
+        Hash join is highly parallelizable and performs better than sort merge join if relation sizes vary greatly. However, sort merge join is less susceptible
+        to data skew.
+
+      \subsubsection{General Join Conditions}
+        All of these algorithms work for equality-based join conditions, including multiple conjunct equality terms. Sort merge join and hash join do not work for
+        inequality conditions (e.g. greater than). If using an index nested loop join for such inequality conditions, it should be clustered. If there is no clustered
+        index, then the block nested loop join is likely the best option.
 
 \end{document}
