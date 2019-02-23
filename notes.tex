@@ -196,6 +196,12 @@
       and result in heavy page thrashing.
 
   \section{Evaluation of Relational Operations}
+    A query plan is a tree of relational operations (e.g. selections, projections, joins). Each relational operation implements some pull interface for fetching
+    output tuples, which typically involves a pull call to its children in the tree and then some additional processing.
+
+    Relational operations can usually be implemented with many different physical implementations. The performance of these physical implementations can differ greatly
+    depending on details of relations such as the number of tuples for a relation, the number of tuples per page, the number of distinct keys, min and max values,
+    and available indices. This kind of information is stored in database catalogs, which are updated periodically.
 
     \subsection{Selections}
       Selections involve selecting a subset of tuples from a relation based on some condition. Two high-level approaches to selections with multiple conjunct
@@ -231,11 +237,8 @@
       similar to that of the projection operation can be applied so that tuples grouped in the operation can be loaded into memory together.
 
     \subsection{Joins}
-      Joining data across tables is a common and potentially very expensive database operation. Various join algorithms are available and their performance
-      can vary greatly depending on the joined data, the available indices, and the join conditions.
-
-      The below examples consist of joining tables $R$ and $S$ over some condition. For cost analysis, $M$ is the number of pages in $R$, $N$ is the number
-      of pages in $N$, and $p_R$ is the number of tuples per page in $R$.
+      Joining data across tables is a common and potentially very expensive database operation. The below examples consist of joining tables $R$ and $S$ over some
+      condition. For cost analysis, $M$ is the number of pages in $R$, $N$ is the number of pages in $N$, and $p_R$ is the number of tuples per page in $R$.
 
       \subsubsection{Simple Nested Loop Join}
         The simple nested loop join tables $R$ and $S$ is as follows:
