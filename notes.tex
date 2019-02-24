@@ -277,4 +277,31 @@
         inequality conditions (e.g. greater than). If using an index nested loop join for such inequality conditions, it should be clustered. If there is no clustered
         index, then the block nested loop join is likely the best option.
 
+  \section{Relational Query Optimization}
+    The previous section covers common relational operations and the algorithms that can be used to implement them. Query optimization covers finding a query plan with
+    low costs. Ideally the goal is to find the best query plan, though in practice the goal is usually to find a query plan that is not very bad. This section covers
+    the details of IBM's System R optimizer, which is a widely used optimization model.
+
+    \subsection{Equivalent Logical Plans}
+      Logical plans are in relational algebra, and are independent from physical implementations. In general, determining whether two logical plans are equivalent is
+      an undecidable problem. However, some known equivalences can be used to explore a subset of equivalent logical plans. These equivalences include:
+      \begin{itemize}
+        \item Selections are commutative and also cascade (i.e. selecting with condition $a \land b$ is the same as selecting with condition $a$ and then selecting the
+          result with condition $b$).
+        \item Projections also cascade similarly to select selections.
+        \item Joins are associative and commutative.
+      \end{itemize}
+
+    \subsection{Single-Relation Plans}
+      Single-relation plans consist of only selection, projection, and aggregate operations. To find a good physical plan, a combination of access paths and algorithms to
+      implement the relational operations are considered. In these cost estimations, the cost of each relation's implementation is considered as well as the size of the result
+      pipelined to the operation above.
+
+    \subsection{Multi-Relation Plans}
+      Multi-relation plans involve joins. Since joins are associative and commutative, the number of equivalent logical plans grows exponentially as the number of joins
+      increases. To decrease this search space, the System R optimizer only considers left-deep plans. The optimizer attempts to find a good $N$ relation plan by first
+      finding the best 1-relational plan for each relation, then finding the best way to join the result of these plans to form 2-relational plans, and so forth, until
+      it determines an $N$ relational plan. For each subset of relations, the cheapest overall plan is kept, as well as the cheapest overall plan with a potentially useful
+      ordering of tuples (i.e. cheapest plan where tuples are sorted, which may speed operations higher up in the tree).
+
 \end{document}
